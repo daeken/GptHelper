@@ -1,0 +1,9 @@
+@GptHelper_HostAddress = http://localhost:5000
+
+### Search Endpoint
+GET {{GptHelper_HostAddress}}/search?query=your_query&token=hardcoded_token
+Accept: application/json
+
+### Fetch Endpoint
+GET {{GptHelper_HostAddress}}/fetch?uri=your_uri&token=hardcoded_token
+Accept: application/json
