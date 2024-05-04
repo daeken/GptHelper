@@ -58,13 +58,12 @@ app.MapGet("/fetch", async (HttpContext context, IHttpClientFactory clientFactor
 	await context.Response.WriteAsync(responseBody);
 });
 
-// Forward POST request with body
-app.MapPost("/post", async (HttpContext context, IHttpClientFactory clientFactory, string uri) => {
+// Send POST request with body
+app.MapGet("/post", async (HttpContext context, IHttpClientFactory clientFactory, string uri, string body) => {
 	var client = clientFactory.CreateClient();
 
-	var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
 	var requestMessage = new HttpRequestMessage(HttpMethod.Post, uri) {
-		Content = new StringContent(requestBody, System.Text.Encoding.UTF8, context.Request.ContentType ?? "application/json")
+		Content = new StringContent(body, System.Text.Encoding.UTF8, context.Request.ContentType ?? "application/json")
 	};
 
 	var response = await client.SendAsync(requestMessage);
