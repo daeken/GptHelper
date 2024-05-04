@@ -39,7 +39,7 @@ app.MapGet("/search", async (HttpContext context, IHttpClientFactory clientFacto
 			Url = (string) r.url
 		})).ToList();
 
-		await HttpResponseJsonExtensions.WriteAsJsonAsync(context.Response, results);
+		await context.Response.WriteAsJsonAsync(results);
 	} else {
 		context.Response.StatusCode = (int) response.StatusCode;
 		await context.Response.WriteAsync(response.ReasonPhrase);
@@ -51,14 +51,29 @@ app.MapGet("/fetch", async (HttpContext context, IHttpClientFactory clientFactor
 	var client = clientFactory.CreateClient();
 	var response = await client.GetAsync(uri);
 
-	if(response.IsSuccessStatusCode) {
-		var content = await response.Content.ReadAsStringAsync();
-		context.Response.ContentType = "text/plain";
-		await context.Response.WriteAsync(content);
-	} else {
-		context.Response.StatusCode = (int) response.StatusCode;
-		await context.Response.WriteAsync(response.ReasonPhrase);
-	}
+	context.Response.ContentType = response.Content.Headers.ContentType?.ToString() ?? "text/plain";
+	context.Response.StatusCode = (int)response.StatusCode;
+
+	var responseBody = await response.Content.ReadAsStringAsync();
+	await context.Response.WriteAsync(responseBody);
+});
+
+// Forward POST request with body
+app.MapPost("/post", async (HttpContext context, IHttpClientFactory clientFactory, string uri) => {
+	var client = clientFactory.CreateClient();
+
+	var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
+	var requestMessage = new HttpRequestMessage(HttpMethod.Post, uri) {
+		Content = new StringContent(requestBody, System.Text.Encoding.UTF8, context.Request.ContentType ?? "application/json")
+	};
+
+	var response = await client.SendAsync(requestMessage);
+	
+	context.Response.ContentType = response.Content.Headers.ContentType?.ToString() ?? "text/plain";
+	context.Response.StatusCode = (int)response.StatusCode;
+
+	var responseBody = await response.Content.ReadAsStringAsync();
+	await context.Response.WriteAsync(responseBody);
 });
 
 app.Run();
